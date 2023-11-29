@@ -1,0 +1,53 @@
+const generatePDF = async () => {
+  try {
+    const existingPdfBytes = await fetch(pdfurl).then((res) => res.arrayBuffer());
+
+    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    const pages = pdfDoc.getPages();
+
+    textFields.forEach((textField) => {
+      const page = pages[textField.page - 1];
+      const { width, height } = page.getSize();
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+      const textWidth = font.widthOfTextAtSize(textField.text, 14);
+      const textHeight = font.heightAtSize(14);
+
+      const x = (textField.x / 100) * width;
+      const y = height - (textField.y / 100) * height;
+
+      page.drawText(textField.text, {
+        x,
+        y,
+        font,
+        size: 14,
+        color: rgb(0, 0, 0),
+      });
+    });
+
+    // Save the modified PDF
+    const modifiedPdfBytes = await pdfDoc.save();
+
+    // Convert array buffer to base64
+    const base64Data = Buffer.from(modifiedPdfBytes).toString('base64');
+
+    // Now you can store `base64Data` in your database or send it to the server
+    // for further processing (e.g., saving to the database)
+    console.log(base64Data);
+
+    // If you need to store it on the server, you can make a POST request
+    // to a server endpoint that handles file uploads and database storage
+    // Example:
+    // const response = await fetch('/api/uploadPdf', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({ pdfData: base64Data }),
+    // });
+    // console.log(response);
+
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+  }
+};
